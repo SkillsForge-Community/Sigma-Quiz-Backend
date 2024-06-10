@@ -1,0 +1,9 @@
+django==4.2
+djangorestframework==3.15.1
+djangorestframework-simplejwt==5.3.1
+django-filter==24.2
+drf-standardized-errors==0.13.0
+pillow==10.3.0
+psycopg2-binary==2.9.9
+ipython==8.24.0
+python-dotenv==1.0.1
