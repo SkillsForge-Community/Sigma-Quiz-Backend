@@ -3,3 +3,4 @@ env
 .env
 ENV
 db.sqlite3
+.pytest_cache

@@ -7,3 +7,6 @@ pillow==10.3.0
 psycopg2-binary==2.9.9
 ipython==8.24.0
 python-dotenv==1.0.1
+pre-commit==3.7.1
+pytest==8.2.2
+black==24.2
