@@ -16,6 +16,8 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
     roles = models.CharField(max_length=20, choices=ROLE_CHOICES, default="adhoc")
 
+    is_superuser = models.BooleanField(default=False)
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name", "roles"]
 
