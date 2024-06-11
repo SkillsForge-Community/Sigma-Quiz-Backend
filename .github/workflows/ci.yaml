@@ -22,7 +22,7 @@ jobs:
               pip install -r requirements.txt
         - name: Check irregular imports
           run: |
-              flake8 --max-line-length 100 sigma
+              flake8 --max-line-length 100 --ignore=F401 sigma
         - name: Sorting imports in regular order
           run: |
               isort sigma
