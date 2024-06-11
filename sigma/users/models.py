@@ -1,10 +1,10 @@
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 
 from sigma.utils.base_class import BaseModel
 
 
-class User(AbstractBaseUser, BaseModel):
+class User(AbstractBaseUser, BaseModel, PermissionsMixin):
 
     ROLE_CHOICES = [
         ("quiz-master", "quiz-master"),
