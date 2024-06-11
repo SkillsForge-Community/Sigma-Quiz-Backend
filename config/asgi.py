@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-from django.core.asgi import get_asgi_application
+from django.core.asgi import get_asgi_application  # noqa: E402
 
 os.environ["DJANGO_SETTINGS_MODULE"] = os.getenv("DJANGO_SETTINGS_MODULE")
 
