@@ -2,5 +2,6 @@ __pycache__
 env
 ENV
 db.sqlite3
+**.env
 .pytest_cache
 .pre-commit-config.yaml
