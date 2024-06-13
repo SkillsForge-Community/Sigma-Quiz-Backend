@@ -52,6 +52,12 @@ SIGMA-QUIZ is a web-based application designed to create, manage, and take quizz
 
    Access the application at `http://127.0.0.1:8000/`.
 
+6. **Setting up and running pre-commit**
+   ```sh
+   pre-commit install # install the hooks
+   pre-commit run --all-files # run your hooks or checks manually
+   ```
+
 
 
 ## License

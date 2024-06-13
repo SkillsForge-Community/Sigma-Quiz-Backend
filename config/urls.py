@@ -20,6 +20,6 @@ from django.urls import include, path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/auth/", include("sigma.authentication.api.v1.urls"), name="auth"),
+    path("api/auth/", include("sigma.authentication.api.v1.urls"), name="authentication"),
     path("api/users/", include("sigma.users.urls"), name="users"),
 ]
