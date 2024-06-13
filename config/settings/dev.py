@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from .base import *
+from .base import *  # noqa
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
@@ -26,6 +26,10 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
+    "DEFAULT_RENDERER_CLASSES": [
+        "sigma.utils.custom_renderer.CustomJsonResponse",
+        "rest_framework.renderers.JSONRenderer",
+    ],
 }
 
 

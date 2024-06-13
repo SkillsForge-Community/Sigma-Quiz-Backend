@@ -15,7 +15,7 @@ def validate_roles(value):
 
     if not isinstance(value, list):
         raise ValidationError("Roles must be a list.")
-    valid_choices = {"quiz-master", "adhoc"}
+    valid_choices = {"quiz-master", "adhoc", "super-admin"}
     invalid_roles = [role for role in value if role not in valid_choices]
 
     for role in value:
