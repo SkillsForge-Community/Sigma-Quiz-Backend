@@ -1,7 +1,8 @@
+from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ErrorDetail
 from rest_framework.test import APITestCase
 
-from sigma.authentication.api.v1.serializers import RegisterUserSerializer
+from sigma.authentication.api.v1.serializers import LogInSerializer, RegisterUserSerializer
 from tests.authentication.factories import User, UserModelFactory
 
 
@@ -71,3 +72,42 @@ class RegisterUserSerializerTests(APITestCase):
         serializer.save()
 
         self.assertIsNotNone(User.objects.filter(email=request_data["email"]).first())
+
+
+class TestSignInSerializer(APITestCase):
+
+    def test_valid_data(self):
+        """Test serializer with valid data"""
+        user = UserModelFactory(email="john@mail.com", password="123456789")
+        user.set_password(user.password)
+        user.save()
+
+        data = {"email": user.email, "password": "123456789"}
+        serializer = LogInSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+        self.assertIn("access_token", serializer.data)
+        self.assertIn("user", serializer.data)
+
+    def test_missing_email(self):
+        """Test serializer with missing email"""
+
+        serializer = LogInSerializer(data={"password": "123456789"})
+        with self.assertRaises(ValidationError) as context:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("email", context.exception.detail)
+
+    def test_missing_password(self):
+        """Test serializer with missing password"""
+
+        serializer = LogInSerializer(data={"email": "john@mail.com"})
+        with self.assertRaises(ValidationError) as context:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("password", context.exception.detail)
+
+    def test_invalid_email(self):
+        """Test serializer with invalid email"""
+        data = {"email": "invalid_email", "password": "123456789"}
+        serializer = LogInSerializer(data=data)
+        with self.assertRaises(ValidationError) as context:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("email", context.exception.detail)
