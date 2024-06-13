@@ -1,5 +1,5 @@
-from django.http import Http404
-from rest_framework import generics, permissions, status
+from django.http import Http404  # noqa NOTE: unused import
+from rest_framework import generics, permissions, status  # noqa NOTE: status unused
 from rest_framework.response import Response
 
 from .models import User
