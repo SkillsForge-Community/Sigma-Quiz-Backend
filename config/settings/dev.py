@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from .base import *  # noqa
 
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY")  # noqa
 
 
 THIRD_PARTY_APPS = [
@@ -18,7 +18,7 @@ LOCAL_APPS = [
     "sigma.users",
 ]
 
-INSTALLED_APPS += THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS += THIRD_PARTY_APPS + LOCAL_APPS  # noqa
 
 
 REST_FRAMEWORK = {
@@ -38,7 +38,7 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")  # noqa
 
 # SIMPLE_JWT_SETTINGS
 SIMPLE_JWT = {

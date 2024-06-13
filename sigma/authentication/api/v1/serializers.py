@@ -40,6 +40,13 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Password must be minimum of eight(8) characters", code="Short Password"
             )
+        return value
+
+    def validate_roles(self, value):
+        """Validates role"""
+
+        if value[0] != "super-admin":
+            raise serializers.ValidationError("Forbidden: super-admin Only", code="Forbidden")
 
         return value
 
