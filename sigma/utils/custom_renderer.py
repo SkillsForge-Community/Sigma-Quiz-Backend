@@ -6,9 +6,13 @@ class CustomJsonResponse(JSONRenderer):
 
     def modify_error_response(self, data, status_code):
         """Modify error response"""
-        error_detail, error_message = self._modify_error_response(data)
+        if "errors" in data:
+            error_detail, error_message = self._modify_error_response(data)
 
-        modified_data = {"error": error_detail, "statusCode": status_code, "message": error_message}
+        else:
+            return data
+        modified_data = {"message": error_message, "error": error_detail, "statusCode": status_code}
+
         return modified_data
 
     def modify_success_response(self, data, status_code):
@@ -19,13 +23,14 @@ class CustomJsonResponse(JSONRenderer):
     def _modify_error_response(self, data):
         """Deep formatting of error response"""
 
-        if data["errors"][0]["code"] == "required":
-            error_detail = "missing required field"
-            error_message = f"{data['errors'][0]['attr']} is required"
+        if "errors" in data:
+            if data["errors"][0]["code"] == "required":
+                error_detail = "missing required field"
+                error_message = f"{data['errors'][0]['attr']} is required"
 
-        if data["errors"][0]["code"] != "required":
-            error_detail = data["errors"][0]["code"]
-            error_message = data["errors"][0]["detail"]
+            if data["errors"][0]["code"] != "required":
+                error_detail = data["errors"][0]["code"]
+                error_message = data["errors"][0]["detail"]
 
         return error_detail, error_message
 
