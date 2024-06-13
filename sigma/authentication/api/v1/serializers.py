@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
@@ -58,3 +59,31 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         user.save(update_fields=["password"])
 
         return user
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "email", "roles"]
+
+
+class LogInSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True, min_length=8)
+
+    def validate(self, attrs):
+        user = User.objects.filter(email=attrs["email"]).first()
+
+        if user is None:
+            raise serializers.ValidationError("User doesn't exist", code="Bad Request")
+
+        if user and not user.check_password(attrs["password"]):
+            raise serializers.ValidationError("Wrong credentials provided", code="Bad Request")
+
+        if user and user.check_password(attrs["password"]):
+            return user
+
+    def to_representation(self, instance):
+        refresh = RefreshToken.for_user(instance)
+        return {"access_token": str(refresh.access_token), "user": ProfileSerializer(instance).data}
