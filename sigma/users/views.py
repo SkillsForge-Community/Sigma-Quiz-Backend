@@ -17,10 +17,12 @@ class UserListView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
 
-        # if not request.user.is_authenticated:
-        #    return error_response
+        # roles = getattr(request.user, "roles", [])
 
-        roles = getattr(request.user, "roles", [])
+        # Simulate the roles from the headers
+        roles_header = request.headers.get("X-User-Roles", "")
+        roles = roles_header.split(",")
+
         if "super-admin" not in roles:
             return Response(
                 {
@@ -30,6 +32,7 @@ class UserListView(generics.ListAPIView):
                 },
                 status=403,
             )
+        return super().list(request, *args, **kwargs)
 
 
 class UserProfileView(generics.RetrieveAPIView):
@@ -41,16 +44,16 @@ class UserProfileView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class UserRetrieveDestroyView(generics.RetrieveDestroyAPIView):
+class UserRetrieveView(generics.RetrieveAPIView):
     """
-    A view for viewing and deleting user accounts.
+    A view for viewing  user accounts.
     """
 
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_object(self):
-        user_id = self.kwargs["pk"]
+        user_id = self.kwargs["id"]
         return User.objects.filter(id=user_id).first()
 
     def get(self, request, *args, **kwargs):
@@ -63,6 +66,26 @@ class UserRetrieveDestroyView(generics.RetrieveDestroyAPIView):
                 },
                 status=404,
             )
+        return super().get(request, *args, **kwargs)
+
+
+class UserDestroyView(generics.DestroyAPIView):
+    """
+    A view for deleting user accounts.
+    """
+
+    serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = "id"
+
+    def delete(self, request, *args, **kwargs):
+        self.perform_destroy(instance)
+        return Response(
+            {
+                "message": "Successful",
+            },
+            status=200,
+        )
 
 
 class UserCreateView(generics.CreateAPIView):

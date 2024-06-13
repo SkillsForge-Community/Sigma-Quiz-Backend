@@ -8,7 +8,6 @@ class CustomJsonResponse(JSONRenderer):
         """Modify error response"""
         if "errors" in data:
             error_detail, error_message = self._modify_error_response(data)
-
         else:
             return data
         modified_data = {"message": error_message, "error": error_detail, "statusCode": status_code}
