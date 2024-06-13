@@ -160,3 +160,60 @@ class TestLoginInAPIView(APITestCase):
             response.json(),
             {"error": "Bad Request", "message": "Wrong credentials provided", "statusCode": 400},
         )
+
+
+class ChangePasswordAPIViewTests(APITestCase):
+
+    def setUp(self):
+        self.url = reverse("authentication:change_password")
+        self.user = UserModelFactory(email="delight@mail.com")
+        self.user.set_password("old_password")
+        self.user.save()
+
+    def test_user_can_change_password_with_valid_data(self):
+        """Test user can change password with valid data"""
+
+        self.client.force_authenticate(self.user)
+
+        request_data = {"old_password": "old_password", "new_password": "new_password"}
+
+        response = self.client.post(self.url, request_data, format="json")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"message": "Password Successfully updated"})
+
+        user = User.objects.filter(email="delight@mail.com").first()
+        self.assertTrue(user.check_password(request_data["new_password"]))
+
+    def test_user_cannot_change_password_with_invalid_data(self):
+        """Test user cannot change password with invalid data"""
+
+        self.client.force_authenticate(self.user)
+
+        request_data = {"old_password": "old_password", "new_password": "new"}
+
+        response = self.client.post(self.url, request_data, format="json")
+
+        self.assertEqual(response.status_code, 400)
+
+        user = User.objects.filter(email="delight@mail.com").first()
+        self.assertTrue(user.check_password(request_data["old_password"]))
+
+    def test_user_new_password_cannot_be_same_as_old_password(self):
+        """Test user new password cannot be same as old password"""
+
+        self.client.force_authenticate(self.user)
+
+        request_data = {"old_password": "old_password", "new_password": "old_password"}
+
+        response = self.client.post(self.url, request_data)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(),
+            {
+                "message": "New password can't be same as Old password",
+                "error": "Invalid Password",
+                "statusCode": 400,
+            },
+        )
