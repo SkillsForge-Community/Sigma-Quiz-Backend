@@ -54,7 +54,7 @@ class UserRetrieveDestroyView(generics.RetrieveDestroyAPIView):
         return User.objects.filter(id=user_id).first()
 
     def get(self, request, *args, **kwargs):
-        if self.get_object() == None:
+        if self.get_object() is None:
             return Response(
                 {
                     "message": "User with this id does not exist",
