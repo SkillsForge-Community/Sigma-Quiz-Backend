@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions
 from rest_framework.response import Response
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import User
 from .serializers import UserSerializer
@@ -12,15 +13,13 @@ class UserListView(generics.ListAPIView):
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
 
     def list(self, request, *args, **kwargs):
 
-        # roles = getattr(request.user, "roles", [])
-
-        # Simulate the roles from the headers
-        roles_header = request.headers.get("X-User-Roles", "")
-        roles = roles_header.split(",")
+        roles = getattr(request.user, "roles", [])
 
         if "super-admin" not in roles:
             return Response(
@@ -41,6 +40,10 @@ class UserProfileView(generics.RetrieveAPIView):
 
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get_object(self):
+        return self.request.user
 
 
 class UserRetrieveDestroyView(generics.RetrieveDestroyAPIView):
@@ -49,7 +52,7 @@ class UserRetrieveDestroyView(generics.RetrieveDestroyAPIView):
     """
 
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     error_response = Response(
         {
