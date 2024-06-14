@@ -1,5 +1,4 @@
-from django.http import Http404  # noqa NOTE: unused import
-from rest_framework import generics, permissions, status  # noqa NOTE: status unused
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 
 from .models import User
@@ -44,13 +43,22 @@ class UserProfileView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class UserRetrieveView(generics.RetrieveAPIView):
+class UserRetrieveDestroyView(generics.RetrieveDestroyAPIView):
     """
-    A view for viewing  user accounts.
+    A view for viewing and deleting user accounts.
     """
 
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
+
+    error_response = Response(
+        {
+            "message": "User with this id does not exist",
+            "error": "Not Found",
+            "statusCode": 404,
+        },
+        status=404,
+    )
 
     def get_object(self):
         user_id = self.kwargs["id"]
@@ -58,27 +66,13 @@ class UserRetrieveView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         if self.get_object() is None:
-            return Response(
-                {
-                    "message": "User with this id does not exist",
-                    "error": "Not Found",
-                    "statusCode": 404,
-                },
-                status=404,
-            )
+            return self.error_response
         return super().get(request, *args, **kwargs)
 
-
-class UserDestroyView(generics.DestroyAPIView):
-    """
-    A view for deleting user accounts.
-    """
-
-    serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
-    lookup_field = "id"
-
     def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance is None:
+            return self.error_response
         self.perform_destroy(instance)
         return Response(
             {
@@ -86,9 +80,3 @@ class UserDestroyView(generics.DestroyAPIView):
             },
             status=200,
         )
-
-
-class UserCreateView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
