@@ -87,3 +87,40 @@ class LogInSerializer(serializers.Serializer):
     def to_representation(self, instance):
         refresh = RefreshToken.for_user(instance)
         return {"access_token": str(refresh.access_token), "user": ProfileSerializer(instance).data}
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate_old_password(self, value):
+        """This is for validating old password"""
+
+        user = self.context["request"].user
+
+        if not user.check_password(value):
+            raise serializers.ValidationError("Wrong Old Password", code="Invalid Password")
+
+        if len(value) < 8:
+            raise serializers.ValidationError(
+                "Password must be minimum of eight(8) characters", code="Short Password"
+            )
+
+        return value
+
+    def validate_new_password(self, value):
+        """This is for validating new password"""
+
+        user = self.context["request"].user
+
+        if user.check_password(value):
+            raise serializers.ValidationError(
+                "New password can't be same as Old password", code="Invalid Password"
+            )
+
+        if len(value) < 8:
+            raise serializers.ValidationError(
+                "Password must be minimum of eight(8) characters", code="Short Password"
+            )
+
+        return value
