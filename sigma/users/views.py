@@ -1,5 +1,4 @@
-from django.http import Http404  # noqa NOTE: unused import
-from rest_framework import generics, permissions, status  # noqa NOTE: status unused
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 
 from .models import User
@@ -17,10 +16,12 @@ class UserListView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
 
-        # if not request.user.is_authenticated:
-        #    return error_response
+        # roles = getattr(request.user, "roles", [])
 
-        roles = getattr(request.user, "roles", [])
+        # Simulate the roles from the headers
+        roles_header = request.headers.get("X-User-Roles", "")
+        roles = roles_header.split(",")
+
         if "super-admin" not in roles:
             return Response(
                 {
@@ -30,6 +31,7 @@ class UserListView(generics.ListAPIView):
                 },
                 status=403,
             )
+        return super().list(request, *args, **kwargs)
 
 
 class UserProfileView(generics.RetrieveAPIView):
@@ -49,23 +51,32 @@ class UserRetrieveDestroyView(generics.RetrieveDestroyAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 
+    error_response = Response(
+        {
+            "message": "User with this id does not exist",
+            "error": "Not Found",
+            "statusCode": 404,
+        },
+        status=404,
+    )
+
     def get_object(self):
-        user_id = self.kwargs["pk"]
+        user_id = self.kwargs["id"]
         return User.objects.filter(id=user_id).first()
 
     def get(self, request, *args, **kwargs):
         if self.get_object() is None:
-            return Response(
-                {
-                    "message": "User with this id does not exist",
-                    "error": "Not Found",
-                    "statusCode": 404,
-                },
-                status=404,
-            )
+            return self.error_response
+        return super().get(request, *args, **kwargs)
 
-
-class UserCreateView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance is None:
+            return self.error_response
+        self.perform_destroy(instance)
+        return Response(
+            {
+                "message": "Successful",
+            },
+            status=200,
+        )
