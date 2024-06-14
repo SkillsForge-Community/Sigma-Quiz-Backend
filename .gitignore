@@ -3,5 +3,6 @@ env
 ENV
 db.sqlite3
 **.env
+**venv
 .pytest_cache
 .pre-commit-config.yaml
