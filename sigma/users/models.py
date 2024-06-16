@@ -10,9 +10,19 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(max_length=255, unique=True)
-    roles = models.JSONField(default=default_roles, validators=[validate_roles])
+    roles = models.JSONField(
+        default=default_roles,
+        validators=[validate_roles],
+    )
 
     is_superuser = models.BooleanField(default=False)
+    school = models.ForeignKey(
+        "school.School",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users",
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name", "roles"]

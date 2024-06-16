@@ -81,5 +81,5 @@ class UserRetrieveDestroyView(generics.RetrieveDestroyAPIView):
             {
                 "message": "Successful",
             },
-            status=200,
+            status=204,
         )
