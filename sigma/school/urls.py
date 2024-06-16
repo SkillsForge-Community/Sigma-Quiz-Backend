@@ -4,12 +4,12 @@ from . import views
 
 urlpatterns = [
     path(
-        "",
+        "school",
         views.SchoolListCreateView.as_view(),
         name="create-school",
     ),
     path(
-        "/<str:id>",
+        "school/<str:id>",
         views.SchoolRetrieveUpdateDestroyView.as_view(),
         name="school-retrieve-update-destroy",
     ),
