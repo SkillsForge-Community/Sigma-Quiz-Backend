@@ -1,6 +1,5 @@
 from rest_framework import generics, permissions
 from rest_framework.response import Response
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import School
 from .serializers import SchoolSerializer
