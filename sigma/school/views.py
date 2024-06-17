@@ -1,4 +1,4 @@
-from rest_framework import generics, permissions
+from rest_framework import filters, generics, permissions
 from rest_framework.response import Response
 
 from .models import School
@@ -15,6 +15,16 @@ class SchoolListCreateView(generics.ListCreateAPIView):
     permission_classes = [
         permissions.IsAuthenticated,
     ]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "state", "address"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        for field in self.search_fields:
+            search_term = self.request.query_params.get(field, None)
+            if search_term:
+                queryset = queryset.filter(**{f"{field}__icontains": search_term})
+        return queryset
 
 
 class SchoolRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -23,7 +33,7 @@ class SchoolRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
 
     serializer_class = SchoolSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     error_response = Response(
         {
