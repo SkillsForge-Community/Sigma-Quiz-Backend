@@ -6,7 +6,7 @@ urlpatterns = [
     path(
         "school",
         views.SchoolListCreateView.as_view(),
-        name="create-school",
+        name="school-list-create",
     ),
     path(
         "school/<str:id>",

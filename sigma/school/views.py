@@ -33,7 +33,7 @@ class SchoolRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
 
     serializer_class = SchoolSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     error_response = Response(
         {
