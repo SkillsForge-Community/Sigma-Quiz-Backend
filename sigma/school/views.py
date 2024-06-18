@@ -24,7 +24,8 @@ class SchoolListCreateView(generics.ListCreateAPIView):
             search_term = self.request.query_params.get(field, None)
             if search_term:
                 queryset = queryset.filter(**{f"{field}__icontains": search_term})
-        return queryset
+                return queryset
+        return []
 
 
 class SchoolRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
