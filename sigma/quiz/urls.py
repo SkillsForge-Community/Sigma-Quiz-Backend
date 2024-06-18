@@ -1,5 +1,11 @@
-from django.urls import path  # noqa
+from django.urls import path
 
-from . import views  # noqa
+from . import views
 
-urlpatterns = []
+urlpatterns = [
+    path(
+        "",
+        views.QuizListCreateView.as_view(),
+        name="quiz-list-create",
+    ),
+]

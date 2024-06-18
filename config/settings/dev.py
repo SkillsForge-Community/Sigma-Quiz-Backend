@@ -51,3 +51,5 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": False,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+APPEND_SLASH = False

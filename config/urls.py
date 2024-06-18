@@ -23,5 +23,5 @@ urlpatterns = [
     path("api/auth/", include("sigma.authentication.api.v1.urls"), name="authentication"),
     path("api/users/", include("sigma.users.urls"), name="users"),
     path("api/sigma-quiz/", include("sigma.school.urls"), name="school"),
-    path("api/sigma-quiz/", include("sigma.quiz.urls"), name="quiz"),
+    path("api/sigma-quiz", include("sigma.quiz.urls"), name="quiz"),
 ]
