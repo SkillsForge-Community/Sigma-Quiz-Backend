@@ -20,12 +20,13 @@ class SchoolListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        for field in self.search_fields:
-            search_term = self.request.query_params.get(field, None)
-            if search_term:
-                queryset = queryset.filter(**{f"{field}__icontains": search_term})
-                return queryset
-        return []
+        if self.search_fields:
+            for field in self.search_fields:
+                search_term = self.request.query_params.get(field, None)
+                if search_term:
+                    queryset = queryset.filter(**{f"{field}__icontains": search_term})
+                    return queryset
+        return queryset
 
 
 class SchoolRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
