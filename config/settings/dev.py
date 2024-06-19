@@ -17,6 +17,7 @@ LOCAL_APPS = [
     "sigma.authentication",
     "sigma.users",
     "sigma.school",
+    "sigma.quiz",
 ]
 
 INSTALLED_APPS += THIRD_PARTY_APPS + LOCAL_APPS  # noqa
@@ -50,3 +51,5 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": False,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+APPEND_SLASH = False

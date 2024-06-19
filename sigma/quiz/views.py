@@ -1,45 +1,59 @@
-from rest_framework import filters, generics, permissions
+from datetime import datetime
+
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 
-from .models import School
-from .serializers import SchoolSerializer
+from .models import Quiz
+from .serializers import QuizSerializer
 
 
-class SchoolListCreateView(generics.ListCreateAPIView):
+class QuizListCreateView(generics.ListCreateAPIView):
     """
-    A view to list and create school
-    """
-
-    queryset = School.objects.all()
-    serializer_class = SchoolSerializer
-    permission_classes = [
-        permissions.IsAuthenticated,
-    ]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ["name", "state", "address"]
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        if self.search_fields:
-            for field in self.search_fields:
-                search_term = self.request.query_params.get(field, None)
-                if search_term:
-                    queryset = queryset.filter(**{f"{field}__icontains": search_term})
-                    return queryset
-        return queryset
-
-
-class SchoolRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    A view for retrieving, updating, and deleting a school account.
+    A view to list and create quizzes
     """
 
-    serializer_class = SchoolSerializer
+    queryset = Quiz.objects.all()
+    serializer_class = QuizSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        date = request.data.get("date")
+        try:
+            datetime.strptime(date, "%Y-%m-%d")
+        except Exception:
+            return Response(
+                {
+                    "message": "date must be a valid ISO 8601 date string",
+                    "error": "Bad Request",
+                    "statusCode": 400,
+                },
+                status=400,
+            )
+
+        if Quiz.objects.filter(date=date).exists():
+            return Response(
+                {
+                    "message": f"Key (date)=({date}) already exists.",
+                    "error": "Conflict",
+                    "statusCode": 409,
+                },
+                status=409,
+            )
+
+        return super().post(request, *args, **kwargs)
+
+
+class QuizRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    A view to retrieve a quiz.
+    """
+
+    serializer_class = QuizSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     error_response = Response(
         {
-            "message": "School with this id does not exist",
+            "message": "Sigma Quiz with this id does not exis",
             "error": "Not Found",
             "statusCode": 404,
         },
@@ -47,10 +61,10 @@ class SchoolRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     )
 
     def get_object(self):
-        """retrieve school object"""
+        """retrieve quiz object"""
 
-        school_id = self.kwargs["id"]
-        return School.objects.filter(id=school_id).first()
+        quiz_id = self.kwargs["id"]
+        return Quiz.objects.filter(id=quiz_id).first()
 
     def get(self, request, *args, **kwargs):
         """Override default get method to include custom error message"""
