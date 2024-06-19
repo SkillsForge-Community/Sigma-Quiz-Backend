@@ -8,4 +8,9 @@ urlpatterns = [
         views.QuizListCreateView.as_view(),
         name="quiz-list-create",
     ),
+    path(
+        "/<str:id>",
+        views.QuizRetrieveUpdateDestroyView.as_view(),
+        name="quiz-retrieve-update-destroy",
+    ),
 ]

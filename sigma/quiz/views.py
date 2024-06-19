@@ -41,3 +41,66 @@ class QuizListCreateView(generics.ListCreateAPIView):
             )
 
         return super().post(request, *args, **kwargs)
+
+
+class QuizRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    A view to retrieve a quiz.
+    """
+
+    serializer_class = QuizSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    error_response = Response(
+        {
+            "message": "Sigma Quiz with this id does not exis",
+            "error": "Not Found",
+            "statusCode": 404,
+        },
+        status=404,
+    )
+
+    def get_object(self):
+        """retrieve quiz object"""
+
+        quiz_id = self.kwargs["id"]
+        return Quiz.objects.filter(id=quiz_id).first()
+
+    def get(self, request, *args, **kwargs):
+        """Override default get method to include custom error message"""
+
+        if self.get_object() is None:
+            return self.error_response
+        return super().get(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        """Override default update method to include custom error message"""
+
+        instance = self.get_object()
+        if instance is None:
+            return self.error_response
+        serializer = self.serializer_class(
+            instance,
+            data=request.data,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=200)
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Override default delete method to include custom error and
+        success message
+        """
+
+        instance = self.get_object()
+        if instance is None:
+            return self.error_response
+        self.perform_destroy(instance)
+        return Response(
+            {
+                "message": "Successful",
+            },
+            status=204,
+        )
