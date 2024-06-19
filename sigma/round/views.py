@@ -1,6 +1,4 @@
-from datetime import datetime
-
-from rest_framework import generics, permissions, serializers
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 
 from sigma.quiz.models import Quiz

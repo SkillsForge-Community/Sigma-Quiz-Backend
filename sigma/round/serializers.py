@@ -54,7 +54,8 @@ class QuizRoundSerializer(serializers.ModelSerializer):
         if Round.objects.filter(quiz=quiz, round_number=round_number).exists():
             raise serializers.ValidationError(
                 {
-                    "message": f'Key ("quizId", round_number)=({quiz_id}, {round_number}) already exists.',
+                    "message": f'Key ("quizId", round_number)=({quiz_id}, '
+                    f"{round_number}) already exists.",
                     "error": "Conflict",
                     "statusCode": 409,
                 }

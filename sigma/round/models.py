@@ -43,4 +43,4 @@ class Question(BaseModel):
         return self.round.id
 
     def __str__(self):
-        return f"Question: {self.question_number}, Round: {self.round.round_number} ({self.round.name})"
+        return f"Question: {self.question_number}, Round: {self.round.round_number})"
