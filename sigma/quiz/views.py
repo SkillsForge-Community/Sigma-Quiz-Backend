@@ -18,18 +18,6 @@ class QuizListCreateView(generics.ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         date = request.data.get("date")
-        existing_quiz = Quiz.objects.get(date=date)
-
-        if existing_quiz:
-            return Response(
-                {
-                    "message": f"Key (date)=({date}) already exists.",
-                    "error": "Conflict",
-                    "statusCode": 409,
-                },
-                status=409,
-            )
-
         try:
             datetime.strptime(date, "%Y-%m-%d")
         except Exception:
@@ -41,4 +29,15 @@ class QuizListCreateView(generics.ListCreateAPIView):
                 },
                 status=400,
             )
+
+        if Quiz.objects.filter(date=date).exists():
+            return Response(
+                {
+                    "message": f"Key (date)=({date}) already exists.",
+                    "error": "Conflict",
+                    "statusCode": 409,
+                },
+                status=409,
+            )
+
         return super().post(request, *args, **kwargs)
