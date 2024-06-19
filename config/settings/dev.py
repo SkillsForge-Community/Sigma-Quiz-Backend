@@ -18,6 +18,7 @@ LOCAL_APPS = [
     "sigma.users",
     "sigma.school",
     "sigma.quiz",
+    "sigma.round",
 ]
 
 INSTALLED_APPS += THIRD_PARTY_APPS + LOCAL_APPS  # noqa
