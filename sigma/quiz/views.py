@@ -1,10 +1,14 @@
 from datetime import datetime
 
-from rest_framework import generics, permissions
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from sigma.quiz.models import SchoolRegisteredForQuiz
 
 from .models import Quiz
-from .serializers import QuizSerializer
+from .serializers import QuizSerializer, SchoolForQuizSerializer
 
 
 class QuizListCreateView(generics.ListCreateAPIView):
@@ -104,3 +108,56 @@ class QuizRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
             },
             status=204,
         )
+
+
+class RegisterSchoolForQuizView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = SchoolForQuizSerializer
+    queryset = SchoolRegisteredForQuiz.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        quiz_id = self.kwargs["quiz_id"]
+        school_id = self.request.data["school_id"]
+        print(school_id)
+
+        error_data = {
+            "message": "School already registered for Quiz",
+            "error": "Conflict",
+            "statusCode": 409,
+        }
+
+        if not self.school_registered_for_quiz(quiz_id, school_id):
+            return super().post(request, *args, **kwargs)
+
+        return Response(data=error_data, status=status.HTTP_409_CONFLICT)
+
+    def get_serializer_context(self):
+        """Modify serializer context"""
+        context = super().get_serializer_context()
+        context["quiz_id"] = self.kwargs["quiz_id"]
+        return context
+
+    def school_registered_for_quiz(self, quiz_id, school_id):
+        """checks if school has registered for quiz"""
+
+        return SchoolRegisteredForQuiz.objects.filter(quiz_id=quiz_id, school_id=school_id).first()
+
+
+class UnRegisterSchoolForQuizView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        """unregistered school for quiz"""
+        school_id = self.kwargs["school_id"]
+        quiz_id = self.kwargs["quiz_id"]
+
+        school_to_unregister_for_quiz_obj = get_object_or_404(
+            SchoolRegisteredForQuiz, school_id=school_id, quiz_id=quiz_id
+        )
+        school_to_unregister_for_quiz_obj.delete()
+
+        schools_remaining_for_quiz = SchoolRegisteredForQuiz.objects.all()
+        serializer = SchoolForQuizSerializer(schools_remaining_for_quiz, many=True)
+
+        response_data = {"message": "Successful", "registered_school": serializer.data}
+        return Response(response_data, status=status.HTTP_200_OK)

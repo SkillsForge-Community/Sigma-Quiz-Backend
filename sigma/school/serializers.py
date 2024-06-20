@@ -18,7 +18,8 @@ class SchoolSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         request = self.context.get("request")
-        if request.method in ["GET", "PUT"]:
+
+        if not request or request.method in ["GET", "PUT", "DELETE"]:
             fields = ["id", "name", "state", "address"]
         else:
             fields = self.Meta.fields

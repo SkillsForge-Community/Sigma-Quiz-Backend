@@ -1,5 +1,8 @@
 from rest_framework import serializers
 
+from sigma.quiz.models import SchoolRegisteredForQuiz
+from sigma.school.serializers import SchoolSerializer
+
 from .models import Quiz
 
 
@@ -23,10 +26,55 @@ class QuizSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         request = self.context.get("request")
-        if request.method in ["GET", "PUT"]:
+
+        if not request or request.method in ["GET", "PUT"]:
             fields = ["id", "year", "title", "description", "date"]
         else:
             fields = self.Meta.fields
 
         representation = super().to_representation(instance)
         return {field: representation[field] for field in fields if field in representation}
+
+
+class SchoolForQuizSerializer(serializers.ModelSerializer):
+    quizId = serializers.UUIDField(source="quiz.id", read_only=True)
+    schoolId = serializers.UUIDField(source="school.id", read_only=True)
+
+    quiz = QuizSerializer(read_only=True)
+    school = SchoolSerializer(read_only=True)
+    school_id = serializers.UUIDField(write_only=True)
+
+    class Meta:
+        model = SchoolRegisteredForQuiz
+        fields = [
+            "id",
+            "schoolId",
+            "quizId",
+            "quiz",
+            "school",
+            "school_id",
+            "created_at",
+            "updated_at",
+        ]
+
+    def create(self, validated_data):
+        """Registers school for quiz"""
+        register_school_for_quiz_obj = SchoolRegisteredForQuiz.objects.create(
+            quiz_id=self.context["quiz_id"], school_id=validated_data["school_id"]
+        )
+
+        return register_school_for_quiz_obj
+
+    def to_representation(self, instance):
+
+        if not self.context.get("request"):
+            self.Meta.fields = [
+                "id",
+                "schoolId",
+                "quizId",
+                "quiz",
+                "school",
+                "school_id",
+            ]
+
+        return super().to_representation(instance)
