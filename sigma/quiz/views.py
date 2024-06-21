@@ -118,7 +118,6 @@ class RegisterSchoolForQuizView(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         quiz_id = self.kwargs["quiz_id"]
         school_id = self.request.data["school_id"]
-        print(school_id)
 
         error_data = {
             "message": "School already registered for Quiz",

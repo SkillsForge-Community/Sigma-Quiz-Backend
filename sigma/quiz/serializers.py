@@ -1,9 +1,27 @@
 from rest_framework import serializers
 
 from sigma.quiz.models import SchoolRegisteredForQuiz
+from sigma.round.models import Round
 from sigma.school.serializers import SchoolSerializer
 
 from .models import Quiz
+
+
+class RoundSerializer(serializers.ModelSerializer):
+    quizId = serializers.UUIDField(source="quiz.id", read_only=True)
+
+    class Meta:
+        model = Round
+        fields = [
+            "id",
+            "quizId",
+            "name",
+            "round_number",
+            "no_of_questions",
+            "no_of_schools",
+            "marks_per_question",
+            "marks_per_bonus_question",
+        ]
 
 
 class QuizSerializer(serializers.ModelSerializer):
@@ -77,4 +95,9 @@ class SchoolForQuizSerializer(serializers.ModelSerializer):
                 "school_id",
             ]
 
-        return super().to_representation(instance)
+        data = super().to_representation(instance)
+
+        quiz = Quiz.objects.filter(id=data["quizId"]).first()
+        data["quiz"]["rounds"] = RoundSerializer(quiz.rounds.all(), many=True).data
+
+        return data
