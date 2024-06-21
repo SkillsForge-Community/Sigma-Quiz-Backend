@@ -5,6 +5,23 @@ from sigma.quiz.models import Quiz
 from .models import Round
 
 
+class RoundSerializer(serializers.ModelSerializer):
+    quizId = serializers.UUIDField(source="quiz.id", read_only=True)
+
+    class Meta:
+        model = Round
+        fields = [
+            "id",
+            "quizId",
+            "name",
+            "round_number",
+            "no_of_questions",
+            "no_of_schools",
+            "marks_per_question",
+            "marks_per_bonus_question",
+        ]
+
+
 class QuizRoundSerializer(serializers.ModelSerializer):
     quiz = serializers.SerializerMethodField()
     quizId = serializers.UUIDField()
