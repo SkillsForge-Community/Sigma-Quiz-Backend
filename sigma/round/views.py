@@ -2,9 +2,8 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 
 from sigma.quiz.models import Quiz
-
-from .models import Round
-from .serializers import QuizRoundSerializer
+from sigma.round.models import Round
+from sigma.round.serializers import QuizRoundSerializer, RoundForSchoolSerializer
 
 
 class QuizRoundCreateView(generics.CreateAPIView):
@@ -108,3 +107,19 @@ class QuizRoundRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
             },
             status=204,
         )
+
+
+class RoundForSchoolView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = RoundForSchoolSerializer
+
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
+    def get_serializer_context(self):
+        """Modify serializer context by adding round_id"""
+
+        data = super().get_serializer_context()
+        data["round_id"] = self.kwargs["round_id"]
+
+        return data

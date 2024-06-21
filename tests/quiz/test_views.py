@@ -15,14 +15,7 @@ class RegisterSchoolForQuizViewTests(APITestCase):
     def setUp(self):
         self.user = UserModelFactory()
         self.quiz = QuizFactory(date=datetime.today())
-        self.round = RoundFactory(
-            quiz=self.quiz,
-            round_number=3,
-            no_of_questions=3,
-            no_of_schools=3,
-            marks_per_question=4,
-            marks_per_bonus_question=3,
-        )
+        self.round = RoundFactory(quiz=self.quiz)
         self.school_1 = SchoolFactory()
         self.school_2 = SchoolFactory(name="God's grace", state="Lagos")
         self.url = reverse("list_create_school_for_quiz", args=[self.quiz.id])
@@ -32,6 +25,7 @@ class RegisterSchoolForQuizViewTests(APITestCase):
         self.client.force_authenticate(self.user)
 
         response = self.client.post(self.url, data={"school_id": self.school_1.id}, format="json")
+
         self.assertEqual(response.status_code, 201)
         self.assertIsNotNone(SchoolRegisteredForQuiz.objects.first())
 

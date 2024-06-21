@@ -1,6 +1,7 @@
 from django.db import models
 
 from sigma.quiz.models import Quiz
+from sigma.school.models import School
 from sigma.utils.base_class import BaseModel
 
 
@@ -44,3 +45,11 @@ class Question(BaseModel):
 
     def __str__(self):
         return f"Question: {self.question_number}, Round: {self.round.round_number})"
+
+
+class RoundForSchool(BaseModel):
+    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="round_for_schools")
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="rounds_for_school")
+
+    def __str__(self):
+        return f"{self.school.name} quiz for {self.round.round_number}"

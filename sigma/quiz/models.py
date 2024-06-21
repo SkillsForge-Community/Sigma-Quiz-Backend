@@ -21,9 +21,7 @@ class Quiz(BaseModel):
 class SchoolRegisteredForQuiz(BaseModel):
 
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="schoolquiz")
-    school = models.ForeignKey(
-        School, on_delete=models.CASCADE, related_name="registered_school_id"
-    )
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="registered_school")
 
     def __str__(self) -> str:
-        return f"{self.school.name} is Registerd"
+        return f"{self.school.name} registered for quiz"
