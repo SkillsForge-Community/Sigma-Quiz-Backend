@@ -1,8 +1,10 @@
-from rest_framework import generics, permissions
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from sigma.quiz.models import Quiz
-from sigma.round.models import Round
+from sigma.round.models import Round, RoundForSchool
 from sigma.round.serializers import QuizRoundSerializer, RoundForSchoolSerializer
 
 
@@ -123,3 +125,23 @@ class RoundForSchoolView(generics.ListCreateAPIView):
         data["round_id"] = self.kwargs["round_id"]
 
         return data
+
+
+class RemoveSchoolFromRoundView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        """Removes school from round"""
+        round_for_school = get_object_or_404(
+            RoundForSchool, round_id=self.kwargs["round_id"], school_id=self.kwargs["school_id"]
+        )
+        round_for_school.delete()
+
+        round_for_school_objs = RoundForSchool.objects.filter(round_id=self.kwargs["round_id"])
+        participating_schools = RoundForSchoolSerializer(
+            instance=round_for_school_objs, many=True
+        ).data
+
+        response_data = {"message": "Successful", "participating_schools": participating_schools}
+
+        return Response(response_data, status=status.HTTP_200_OK)
