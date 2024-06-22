@@ -155,7 +155,9 @@ class RoundForSchoolSerializer(serializers.ModelSerializer):
             instance=school_registration_for_quiz_obj
         ).data
 
-        data["school"].pop("created_at")
-        data["school"].pop("updated_at")
+        if hasattr("school", "created_at") and hasattr("school", "updated_at"):
+            data["school"].pop("created_at")
+            data["school"].pop("updated_at")
+            return data
 
         return data
