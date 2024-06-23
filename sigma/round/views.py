@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 
 from sigma.quiz.models import Quiz
 from sigma.round.models import Round, RoundForSchool
-from sigma.round.serializers import QuizRoundSerializer, RoundForSchoolSerializer
+from sigma.round.serializers import QuizRoundSerializer, RoundForSchoolSerializer, RoundSerializer
 
 
 class QuizRoundCreateView(generics.CreateAPIView):
@@ -19,7 +19,6 @@ class QuizRoundCreateView(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        print(f"{request.data}")
 
         if serializer.is_valid():
             data = serializer.validated_data
@@ -109,6 +108,22 @@ class QuizRoundRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
             },
             status=204,
         )
+
+
+class QuizRoundsListView(generics.ListAPIView):
+    """
+    A view to list all rounds based on a specific quiz ID.
+    """
+
+    serializer_class = RoundSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        quiz_id = self.kwargs.get("quiz_id")
+
+        quiz = Quiz.objects.filter(id=quiz_id).first()
+        queryset = Round.objects.filter(quiz=quiz)
+        return queryset
 
 
 class RoundForSchoolView(generics.ListCreateAPIView):

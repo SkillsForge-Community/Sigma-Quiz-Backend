@@ -26,7 +26,9 @@ class RoundSerializer(serializers.ModelSerializer):
 
 class QuizRoundSerializer(serializers.ModelSerializer):
     quiz = serializers.SerializerMethodField()
-    quizId = serializers.UUIDField()
+    questions = serializers.SerializerMethodField()
+    schoolParticipations = serializers.SerializerMethodField()
+    quizId = serializers.UUIDField(required=False)
 
     class Meta:
         model = Round
@@ -42,6 +44,7 @@ class QuizRoundSerializer(serializers.ModelSerializer):
             "id",
             "created_at",
             "updated_at",
+            "schoolParticipations",
             "questions",
         ]
 
@@ -55,9 +58,16 @@ class QuizRoundSerializer(serializers.ModelSerializer):
             "date": quiz_obj.date,
         }
 
+    def get_schoolParticipations(self, instance):
+        return []
+
+    def get_questions(self, instance):
+        return []
+
     def validate(self, data):
 
-        quiz_id = data.get("quizId")
+        instance = self.instance
+        quiz_id = data.get("quizId") if "quizId" in data else instance.quiz.id
         round_number = data.get("round_number")
 
         try:
@@ -65,12 +75,15 @@ class QuizRoundSerializer(serializers.ModelSerializer):
         except Quiz.DoesNotExist:
             raise serializers.ValidationError(
                 {
-                    "message": "Sigma Quiz with this id does not exis",
+                    "message": "Sigma Quiz with this id does not exist",
                     "error": "Not Found",
                     "statusCode": 404,
                 }
             )
-        if Round.objects.filter(quiz=quiz, round_number=round_number).exists():
+        round_obj = Round.objects.filter(quiz=quiz, round_number=round_number)
+        if instance:
+            round_obj = round_obj.exclude(id=instance.id)
+        if round_obj.exists():
             raise serializers.ValidationError(
                 {
                     "message": f'Key ("quizId", round_number)=({quiz_id}, '
@@ -83,8 +96,10 @@ class QuizRoundSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        request = self.context.get("request")
-        if request.method in ["GET"]:
+        request = self.context.get("request", None)
+        fields = list(self.Meta.fields)
+
+        if request and request.method == "GET":
             fields = [
                 "id",
                 "quizId",
@@ -97,8 +112,11 @@ class QuizRoundSerializer(serializers.ModelSerializer):
                 "schoolParticipations",
                 "questions",
             ]
+        elif request and request.method == "PUT":
+            fields = RoundSerializer.Meta.fields
         else:
-            fields = self.Meta.fields
+            fields.remove("schoolParticipations")
+            fields.remove("questions")
 
         representation = super().to_representation(instance)
         return {field: representation[field] for field in fields if field in representation}
