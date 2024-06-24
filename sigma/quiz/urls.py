@@ -19,7 +19,7 @@ urlpatterns = [
         name="list_create_school_for_quiz",
     ),
     path(
-        "/<uuid:quiz_id>/schools/<uuid:school_id>/",
+        "/<uuid:quiz_id>/schools/<uuid:school_id>",
         views.UnRegisterSchoolForQuizView.as_view(),
         name="unregister_school_for_quiz",
     ),

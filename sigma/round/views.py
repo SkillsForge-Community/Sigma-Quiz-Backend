@@ -129,9 +129,17 @@ class QuizRoundsListView(generics.ListAPIView):
 class RoundForSchoolView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = RoundForSchoolSerializer
+    queryset = Round.objects.all()
 
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        round_id = self.kwargs.get("round_id")
+        queryset = queryset.filter(id=round_id)
+
+        return queryset
 
     def get_serializer_context(self):
         """Modify serializer context by adding round_id"""

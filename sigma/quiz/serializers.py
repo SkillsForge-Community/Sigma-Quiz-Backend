@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from sigma.quiz.models import SchoolRegisteredForQuiz
 from sigma.round.models import Round
-from sigma.school.serializers import SchoolSerializer
 
 from .models import Quiz
 
@@ -58,22 +57,45 @@ class SchoolForQuizSerializer(serializers.ModelSerializer):
     quizId = serializers.UUIDField(source="quiz.id", read_only=True)
     schoolId = serializers.UUIDField(source="school.id", read_only=True)
 
-    quiz = QuizSerializer(read_only=True)
-    school = SchoolSerializer(read_only=True)
+    quiz = serializers.SerializerMethodField()
+    school = serializers.SerializerMethodField()
     school_id = serializers.UUIDField(write_only=True)
 
     class Meta:
         model = SchoolRegisteredForQuiz
         fields = [
-            "id",
-            "schoolId",
-            "quizId",
-            "quiz",
-            "school",
             "school_id",
+            "quizId",
+            "schoolId",
+            "school",
+            "quiz",
+            "id",
             "created_at",
             "updated_at",
         ]
+
+    def get_quiz(self, instance):
+        quiz_obj = instance.quiz
+        rounds = quiz_obj.rounds.all()
+        rounds_data = RoundSerializer(rounds, many=True).data
+
+        return {
+            "id": quiz_obj.id,
+            "year": quiz_obj.year,
+            "title": quiz_obj.title,
+            "description": quiz_obj.description,
+            "date": quiz_obj.date,
+            "rounds": rounds_data,
+        }
+
+    def get_school(self, instance):
+        school_obj = instance.school
+        return {
+            "id": school_obj.id,
+            "name": school_obj.name,
+            "state": school_obj.state,
+            "address": school_obj.address,
+        }
 
     def create(self, validated_data):
         """Registers school for quiz"""
@@ -85,19 +107,21 @@ class SchoolForQuizSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
 
-        if not self.context.get("request"):
-            self.Meta.fields = [
+        request = self.context.get("request", None)
+        fields = list(self.Meta.fields)
+        representation = super().to_representation(instance)
+
+        if request and request.method in ["GET", "DELETE"]:
+            quiz_data = representation.get("quiz", {})
+            quiz_data.pop("rounds", None)
+            representation["quiz"] = quiz_data
+
+            fields = [
                 "id",
-                "schoolId",
                 "quizId",
+                "schoolId",
                 "quiz",
                 "school",
-                "school_id",
             ]
 
-        data = super().to_representation(instance)
-
-        quiz = Quiz.objects.filter(id=data["quizId"]).first()
-        data["quiz"]["rounds"] = RoundSerializer(quiz.rounds.all(), many=True).data
-
-        return data
+        return {field: representation[field] for field in fields if field in representation}

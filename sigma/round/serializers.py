@@ -4,7 +4,6 @@ from sigma.quiz.models import Quiz, SchoolRegisteredForQuiz
 from sigma.quiz.serializers import SchoolForQuizSerializer
 from sigma.round.models import Round, RoundForSchool
 from sigma.school.models import School
-from sigma.school.serializers import SchoolSerializer
 
 
 class RoundSerializer(serializers.ModelSerializer):
@@ -128,16 +127,55 @@ class RoundForSchoolSerializer(serializers.ModelSerializer):
     roundId = serializers.UUIDField(source="round.id", read_only=True)
 
     round = RoundSerializer(read_only=True)
-    school = SchoolSerializer(read_only=True)
+    # school = SchoolSerializer(read_only=True)
 
     created_at = serializers.ReadOnlyField()
     updated_at = serializers.ReadOnlyField()
 
     school_id = serializers.UUIDField(write_only=True)
+    schoolRegistration = serializers.SerializerMethodField()
+    schoolRegistrationId = serializers.SerializerMethodField()
 
     class Meta:
         model = RoundForSchool
-        fields = ["id", "roundId", "round", "school", "school_id", "created_at", "updated_at"]
+        fields = [
+            "roundId",
+            "schoolRegistrationId",
+            "schoolRegistration",
+            "round",
+            "id",
+            "created_at",
+            "updated_at",
+            "school_id",
+        ]
+
+    def get_schoolRegistration(self, instance):
+        school_id = instance.school_id
+        school_obj = School.objects.filter(id=school_id).first()
+        school_registration_for_quiz_obj = SchoolRegisteredForQuiz.objects.filter(
+            school=school_obj
+        ).first()
+
+        data = {"id": school_registration_for_quiz_obj.id}
+
+        obj = SchoolForQuizSerializer(instance=school_registration_for_quiz_obj).data
+        quiz_data = obj.get("quiz", {})
+        quiz_data.pop("rounds", None)
+        obj["quiz"] = quiz_data
+        obj.pop("created_at")
+        obj.pop("updated_at")
+        data.update(obj)
+
+        return data
+
+    def get_schoolRegistrationId(self, instance):
+        school_id = instance.school_id
+        school_obj = School.objects.filter(id=school_id).first()
+        school_registration_for_quiz_obj = SchoolRegisteredForQuiz.objects.filter(
+            school=school_obj
+        ).first()
+
+        return school_registration_for_quiz_obj.id
 
     def validate(self, attrs):
         """validates round for school"""
@@ -161,21 +199,18 @@ class RoundForSchoolSerializer(serializers.ModelSerializer):
         return round_for_school
 
     def to_representation(self, instance):
-        data = super().to_representation(instance)
 
-        school = School.objects.filter(id=data["school"]["id"]).first()
-        school_registration_for_quiz_obj = SchoolRegisteredForQuiz.objects.filter(
-            school=school
-        ).first()
+        request = self.context.get("request", None)
+        fields = list(self.Meta.fields)
 
-        data["SchoolRegistrationId"] = school_registration_for_quiz_obj.id
-        data["SchoolRegistration"] = SchoolForQuizSerializer(
-            instance=school_registration_for_quiz_obj
-        ).data
+        if request and request.method in ["GET", "DELETE"]:
 
-        if hasattr("school", "created_at") and hasattr("school", "updated_at"):
-            data["school"].pop("created_at")
-            data["school"].pop("updated_at")
-            return data
+            fields = [
+                "id",
+                "roundId",
+                "schoolRegistrationId",
+                "schoolRegistration",
+            ]
 
-        return data
+        representation = super().to_representation(instance)
+        return {field: representation[field] for field in fields if field in representation}
