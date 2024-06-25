@@ -4,7 +4,6 @@ from sigma.quiz.models import Quiz, SchoolRegisteredForQuiz
 from sigma.quiz.serializers import SchoolForQuizSerializer
 from sigma.round.models import Round, RoundForSchool
 from sigma.school.models import School
-from sigma.school.serializers import SchoolSerializer
 
 
 class RoundSerializer(serializers.ModelSerializer):
@@ -26,7 +25,9 @@ class RoundSerializer(serializers.ModelSerializer):
 
 class QuizRoundSerializer(serializers.ModelSerializer):
     quiz = serializers.SerializerMethodField()
-    quizId = serializers.UUIDField()
+    questions = serializers.SerializerMethodField()
+    schoolParticipations = serializers.SerializerMethodField()
+    quizId = serializers.UUIDField(required=False)
 
     class Meta:
         model = Round
@@ -42,6 +43,7 @@ class QuizRoundSerializer(serializers.ModelSerializer):
             "id",
             "created_at",
             "updated_at",
+            "schoolParticipations",
             "questions",
         ]
 
@@ -55,9 +57,16 @@ class QuizRoundSerializer(serializers.ModelSerializer):
             "date": quiz_obj.date,
         }
 
+    def get_schoolParticipations(self, instance):
+        return []
+
+    def get_questions(self, instance):
+        return []
+
     def validate(self, data):
 
-        quiz_id = data.get("quizId")
+        instance = self.instance
+        quiz_id = data.get("quizId") if "quizId" in data else instance.quiz.id
         round_number = data.get("round_number")
 
         try:
@@ -65,12 +74,15 @@ class QuizRoundSerializer(serializers.ModelSerializer):
         except Quiz.DoesNotExist:
             raise serializers.ValidationError(
                 {
-                    "message": "Sigma Quiz with this id does not exis",
+                    "message": "Sigma Quiz with this id does not exist",
                     "error": "Not Found",
                     "statusCode": 404,
                 }
             )
-        if Round.objects.filter(quiz=quiz, round_number=round_number).exists():
+        round_obj = Round.objects.filter(quiz=quiz, round_number=round_number)
+        if instance:
+            round_obj = round_obj.exclude(id=instance.id)
+        if round_obj.exists():
             raise serializers.ValidationError(
                 {
                     "message": f'Key ("quizId", round_number)=({quiz_id}, '
@@ -83,8 +95,10 @@ class QuizRoundSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        request = self.context.get("request")
-        if request.method in ["GET"]:
+        request = self.context.get("request", None)
+        fields = list(self.Meta.fields)
+
+        if request and request.method == "GET":
             fields = [
                 "id",
                 "quizId",
@@ -97,8 +111,11 @@ class QuizRoundSerializer(serializers.ModelSerializer):
                 "schoolParticipations",
                 "questions",
             ]
+        elif request and request.method == "PUT":
+            fields = RoundSerializer.Meta.fields
         else:
-            fields = self.Meta.fields
+            fields.remove("schoolParticipations")
+            fields.remove("questions")
 
         representation = super().to_representation(instance)
         return {field: representation[field] for field in fields if field in representation}
@@ -110,16 +127,73 @@ class RoundForSchoolSerializer(serializers.ModelSerializer):
     roundId = serializers.UUIDField(source="round.id", read_only=True)
 
     round = RoundSerializer(read_only=True)
-    school = SchoolSerializer(read_only=True)
+    # school = SchoolSerializer(read_only=True)
 
     created_at = serializers.ReadOnlyField()
     updated_at = serializers.ReadOnlyField()
 
     school_id = serializers.UUIDField(write_only=True)
+    schoolRegistration = serializers.SerializerMethodField()
+    schoolRegistrationId = serializers.SerializerMethodField()
 
     class Meta:
         model = RoundForSchool
-        fields = ["id", "roundId", "round", "school", "school_id", "created_at", "updated_at"]
+        fields = [
+            "roundId",
+            "schoolRegistrationId",
+            "schoolRegistration",
+            "round",
+            "id",
+            "created_at",
+            "updated_at",
+            "school_id",
+        ]
+
+    def get_schoolRegistration(self, instance):
+        if hasattr(instance, "school_id") and instance.school_id:
+            school_obj = School.objects.filter(id=instance.school_id).first()
+        else:
+            round_id = instance.id
+            round_for_school_obj = RoundForSchool.objects.filter(round_id=round_id).first()
+            school_obj = round_for_school_obj.school
+
+        school_registration_for_quiz_obj = SchoolRegisteredForQuiz.objects.filter(
+            school=school_obj
+        ).first()
+
+        data = {"id": school_registration_for_quiz_obj.id}
+
+        obj = SchoolForQuizSerializer(instance=school_registration_for_quiz_obj).data
+        quiz_data = obj.get("quiz", {})
+        quiz_data.pop("rounds", None)
+        obj["quiz"] = quiz_data
+        obj.pop("created_at")
+        obj.pop("updated_at")
+        data.update(obj)
+
+        round_obj = RoundForSchool.objects.filter(school=school_obj).first()
+        round_data = {
+            "id": round_obj.id,
+            "roundId": round_obj.round_id,
+            "schoolRegistrationId": school_registration_for_quiz_obj.id,
+        }
+        data.update({"round": round_data})
+
+        return data
+
+    def get_schoolRegistrationId(self, instance):
+        if hasattr(instance, "school_id") and instance.school_id:
+            school_obj = School.objects.filter(id=instance.school_id).first()
+        else:
+            round_id = instance.id
+            round_for_school_obj = RoundForSchool.objects.filter(round_id=round_id).first()
+            school_obj = round_for_school_obj.school
+
+        school_registration_for_quiz_obj = SchoolRegisteredForQuiz.objects.filter(
+            school=school_obj
+        ).first()
+
+        return school_registration_for_quiz_obj.id
 
     def validate(self, attrs):
         """validates round for school"""
@@ -143,21 +217,18 @@ class RoundForSchoolSerializer(serializers.ModelSerializer):
         return round_for_school
 
     def to_representation(self, instance):
-        data = super().to_representation(instance)
 
-        school = School.objects.filter(id=data["school"]["id"]).first()
-        school_registration_for_quiz_obj = SchoolRegisteredForQuiz.objects.filter(
-            school=school
-        ).first()
+        request = self.context.get("request", None)
+        fields = list(self.Meta.fields)
 
-        data["SchoolRegistrationId"] = school_registration_for_quiz_obj.id
-        data["SchoolRegistration"] = SchoolForQuizSerializer(
-            instance=school_registration_for_quiz_obj
-        ).data
+        if request and request.method in ["GET", "DELETE"]:
 
-        if hasattr("school", "created_at") and hasattr("school", "updated_at"):
-            data["school"].pop("created_at")
-            data["school"].pop("updated_at")
-            return data
+            fields = [
+                "id",
+                "roundId",
+                "schoolRegistrationId",
+                "schoolRegistration",
+            ]
 
-        return data
+        representation = super().to_representation(instance)
+        return {field: representation[field] for field in fields if field in representation}

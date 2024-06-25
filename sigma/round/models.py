@@ -51,5 +51,13 @@ class RoundForSchool(BaseModel):
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="round_for_schools")
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="rounds_for_school")
 
+    @property
+    def school_id(self):
+        return self.school.id
+
+    @property
+    def round_id(self):
+        return self.round.id
+
     def __str__(self):
         return f"{self.school.name} quiz for {self.round.round_number}"

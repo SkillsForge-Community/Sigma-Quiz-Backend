@@ -130,6 +130,18 @@ class RegisterSchoolForQuizView(generics.ListCreateAPIView):
 
         return Response(data=error_data, status=status.HTTP_409_CONFLICT)
 
+    def get_queryset(self):
+        """
+        restricts the returned registrations,
+        by filtering with `quiz_id`
+        """
+
+        queryset = super().get_queryset()
+        quiz_id = self.kwargs.get("quiz_id")
+        queryset = queryset.filter(quiz_id=quiz_id)
+
+        return queryset
+
     def get_serializer_context(self):
         """Modify serializer context"""
         context = super().get_serializer_context()
