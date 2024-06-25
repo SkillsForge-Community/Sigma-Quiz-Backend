@@ -150,8 +150,13 @@ class RoundForSchoolSerializer(serializers.ModelSerializer):
         ]
 
     def get_schoolRegistration(self, instance):
-        school_id = instance.school_id
-        school_obj = School.objects.filter(id=school_id).first()
+        if hasattr(instance, "school_id") and instance.school_id:
+            school_obj = School.objects.filter(id=instance.school_id).first()
+        else:
+            round_id = instance.id
+            round_for_school_obj = RoundForSchool.objects.filter(round_id=round_id).first()
+            school_obj = round_for_school_obj.school
+
         school_registration_for_quiz_obj = SchoolRegisteredForQuiz.objects.filter(
             school=school_obj
         ).first()
@@ -166,11 +171,24 @@ class RoundForSchoolSerializer(serializers.ModelSerializer):
         obj.pop("updated_at")
         data.update(obj)
 
+        round_obj = RoundForSchool.objects.filter(school=school_obj).first()
+        round_data = {
+            "id": round_obj.id,
+            "roundId": round_obj.round_id,
+            "schoolRegistrationId": school_registration_for_quiz_obj.id,
+        }
+        data.update({"round": round_data})
+
         return data
 
     def get_schoolRegistrationId(self, instance):
-        school_id = instance.school_id
-        school_obj = School.objects.filter(id=school_id).first()
+        if hasattr(instance, "school_id") and instance.school_id:
+            school_obj = School.objects.filter(id=instance.school_id).first()
+        else:
+            round_id = instance.id
+            round_for_school_obj = RoundForSchool.objects.filter(round_id=round_id).first()
+            school_obj = round_for_school_obj.school
+
         school_registration_for_quiz_obj = SchoolRegisteredForQuiz.objects.filter(
             school=school_obj
         ).first()

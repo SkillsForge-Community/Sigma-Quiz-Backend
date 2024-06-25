@@ -129,7 +129,7 @@ class QuizRoundsListView(generics.ListAPIView):
 class RoundForSchoolView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = RoundForSchoolSerializer
-    queryset = Round.objects.all()
+    queryset = RoundForSchool.objects.all()
 
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
@@ -137,7 +137,8 @@ class RoundForSchoolView(generics.ListCreateAPIView):
     def get_queryset(self):
         queryset = super().get_queryset()
         round_id = self.kwargs.get("round_id")
-        queryset = queryset.filter(id=round_id)
+        round = Round.objects.filter(id=round_id).first()
+        queryset = queryset.filter(round=round)
 
         return queryset
 
