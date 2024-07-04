@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
     path(
-        "rounds/",
+        "rounds/",  # <--- Append / in the postman request
         views.QuizRoundCreateView.as_view(),
         name="quiz-round-create",
     ),

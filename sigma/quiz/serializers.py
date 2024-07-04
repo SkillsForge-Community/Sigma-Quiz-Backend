@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from sigma.quiz.models import SchoolRegisteredForQuiz
 from sigma.round.models import Round
+from sigma.school.models import School
 
 from .models import Quiz
 
@@ -104,6 +105,24 @@ class SchoolForQuizSerializer(serializers.ModelSerializer):
         )
 
         return register_school_for_quiz_obj
+
+    def validate_quiz_id(self, value):
+        """Validates quiz_id"""
+        quiz_obj = Quiz.objects.filter(id=value).first()
+
+        if not quiz_obj:
+            raise serializers.ValidationError("Quiz with this id does not exist")
+
+        return value
+
+    def validate_school_id(self, value):
+        """Validates school_id"""
+        school_obj = School.objects.filter(id=value).first()
+
+        if not school_obj:
+            raise serializers.ValidationError("School with this id does not exist")
+
+        return value
 
     def to_representation(self, instance):
 

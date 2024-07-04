@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from sigma.quiz.models import Quiz
-from sigma.round.models import Round, RoundForSchool
+from sigma.round.models import Round, RoundForSchool, School
 from sigma.round.serializers import QuizRoundSerializer, RoundForSchoolSerializer, RoundSerializer
 
 
@@ -88,8 +88,19 @@ class QuizRoundRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
             data=request.data,
             context={"request": request},
         )
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        if serializer.is_valid():
+            self.perform_update(serializer)
+        else:
+            return Response(
+                {
+                    "message": "Update will make partipating schools more "
+                    "than allowed number for round. Please remove schools "
+                    "from round first or increase no of schools",
+                    "error": "Conflict",
+                    "statusCode": 409,
+                },
+                status=409,
+            )
         return Response(serializer.data, status=200)
 
     def delete(self, request, *args, **kwargs):
@@ -131,7 +142,36 @@ class RoundForSchoolView(generics.ListCreateAPIView):
     serializer_class = RoundForSchoolSerializer
     queryset = RoundForSchool.objects.all()
 
+    def get_error_response(self, variable: str):
+        error_response = Response(
+            {
+                "message": f"{variable} ID does not exist",
+                "error": "Not Found",
+                "statusCode": 404,
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+        return error_response
+
     def post(self, request, *args, **kwargs):
+        round_id = self.kwargs.get("round_id")
+        if not Round.objects.filter(id=round_id).exists():
+            print("round_id", round_id)
+            return self.get_error_response("Round")
+        school_id = request.data.get("school_id")
+        if not School.objects.filter(id=school_id).exists():
+            return self.get_error_response("School")
+
+        school = RoundForSchool.objects.filter(school_id=school_id, round_id=round_id).first()
+        if school:
+            return Response(
+                {
+                    "message": "Round allows a maximum of 1 Schools",
+                    "error": "Conflict",
+                    "statusCode": 409,
+                },
+                status=409,
+            )
         return super().post(request, *args, **kwargs)
 
     def get_queryset(self):
