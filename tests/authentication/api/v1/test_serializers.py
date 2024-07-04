@@ -142,13 +142,13 @@ class ChangePasswordSerializerTests(APITestCase):
             ),
         )
 
-    def test_error_not_raised_when_when_valid_data_are_provided(self):
+    def test_error_not_raised_when_valid_data_are_provided(self):
         """Test user password changed when valid data are provided"""
 
         request = MagicMock()
         request.user = self.user
 
-        data = {"old_password": "old_password", "new_password": "new_password"}
+        data = {"email": request.user.email, "new_password": "new_password"}
 
         serializer = ChangePasswordSerializer(data=data, context={"request": request})
         self.assertTrue(serializer.is_valid())
