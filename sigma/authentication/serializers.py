@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password as password_validator
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -35,18 +37,19 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         return value
 
     def validate_password(self, value):
-        """Validates provided password"""
-
-        if len(value) < 8:
-            raise serializers.ValidationError(
-                "Password must be minimum of eight(8) characters", code="Short Password"
-            )
+        """validates provided password"""
+        try:
+            password_validator(password=value)
+        except ValidationError as err:
+            raise serializers.ValidationError(err.messages, code="Invalid Password")
         return value
 
     def validate_roles(self, value):
         """Validates role"""
 
-        if value[0] != "super-admin":
+        valid_roles = ["quiz-master", "adhoc", "super-admin"]
+
+        if value[0] not in valid_roles:
             raise serializers.ValidationError("Forbidden: super-admin Only", code="Forbidden")
 
         return value
@@ -101,11 +104,6 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Wrong Old Password", code="Invalid Password")
 
-        if len(value) < 8:
-            raise serializers.ValidationError(
-                "Password must be minimum of eight(8) characters", code="Short Password"
-            )
-
         return value
 
     def validate_new_password(self, value):
@@ -117,10 +115,9 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 "New password can't be same as Old password", code="Invalid Password"
             )
-
-        if len(value) < 8:
-            raise serializers.ValidationError(
-                "Password must be minimum of eight(8) characters", code="Short Password"
-            )
+        try:
+            password_validator(value)
+        except ValidationError as err:
+            raise serializers.ValidationError(err.messages, code="Invalid Password")
 
         return value

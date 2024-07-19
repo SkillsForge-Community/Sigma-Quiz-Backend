@@ -4,7 +4,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ErrorDetail
 from rest_framework.test import APITestCase
 
-from sigma.authentication.api.v1.serializers import (
+from sigma.authentication.serializers import (
     ChangePasswordSerializer,
     LogInSerializer,
     RegisterUserSerializer,
@@ -13,6 +13,8 @@ from tests.authentication.factories import User, UserModelFactory
 
 
 class RegisterUserSerializerTests(APITestCase):
+    def setUp(self):
+        self.maxDiff = None
 
     def test_error_raised_for_invalid_length_of_password(self):
         """Test error raised for invalid length of password"""
@@ -22,7 +24,7 @@ class RegisterUserSerializerTests(APITestCase):
             "last_name": "jose",
             "email": "mimijose@mail.com",
             "roles": ["super-admin"],
-            "password": "123",
+            "password": "short",
         }
 
         serializer = RegisterUserSerializer(data=request_data)
@@ -31,8 +33,9 @@ class RegisterUserSerializerTests(APITestCase):
             serializer.errors["password"],
             [
                 ErrorDetail(
-                    string="Password must be minimum of eight(8) characters", code="Short Password"
-                )
+                    string="This password is too short. It must contain at least 8 characters.",
+                    code="Invalid Password",
+                ),
             ],
         )
 
@@ -69,7 +72,7 @@ class RegisterUserSerializerTests(APITestCase):
             "last_name": "jose",
             "email": "mimijose@mail.com",
             "roles": ["super-admin"],
-            "password": "12345628282",
+            "password": "mimipassword",
         }
 
         serializer = RegisterUserSerializer(data=request_data)
@@ -138,7 +141,8 @@ class ChangePasswordSerializerTests(APITestCase):
         self.assertEqual(
             serializer.errors["new_password"][0],
             ErrorDetail(
-                string="Password must be minimum of eight(8) characters", code="Short Password"
+                string="This password is too short. It must contain at least 8 characters.",
+                code="Invalid Password",
             ),
         )
 

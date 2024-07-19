@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
-from sigma.authentication.api.v1.serializers import (
+from sigma.authentication.serializers import (
     ChangePasswordSerializer,
     LogInSerializer,
     RegisterUserSerializer,
@@ -33,7 +33,9 @@ class LoginInAPIView(generics.GenericAPIView):
 
 class ChangePasswordAPIView(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
 
     def post(self, request, *args, **kwargs):
         user = self.request.user
