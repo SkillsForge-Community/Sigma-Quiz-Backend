@@ -33,7 +33,7 @@ class UserListView(generics.ListAPIView):
         return super().list(request, *args, **kwargs)
 
 
-class UserProfileView(generics.RetrieveAPIView):
+class UserProfileView(generics.RetrieveUpdateAPIView):
     """
     A view to retrieve the current user's profile.
     """
@@ -44,6 +44,9 @@ class UserProfileView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
 
 
 class UserRetrieveDestroyView(generics.RetrieveDestroyAPIView):

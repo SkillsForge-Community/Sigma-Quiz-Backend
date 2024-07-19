@@ -90,21 +90,33 @@ class LogInSerializer(serializers.Serializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(write_only=True)
+    email = serializers.EmailField(write_only=True)
     new_password = serializers.CharField(write_only=True)
+    # old_password = serializers.CharField(write_only=True)
+    #
+    # def validate_old_password(self, value):
+    #     """This is for validating old password"""
+    #
+    #     user = self.context["request"].user
+    #
+    #     if not user.check_password(value):
+    #         raise serializers.ValidationError("Wrong Old Password", code="Invalid Password")
+    #
+    #     if len(value) < 8:
+    #         raise serializers.ValidationError(
+    #             "Password must be minimum of eight(8) characters", code="Short Password"
+    #         )
+    #
+    #     return value
+    #
 
-    def validate_old_password(self, value):
-        """This is for validating old password"""
+    def validate_email(self, value):
+        """This is for validating email"""
 
-        user = self.context["request"].user
+        user = User.objects.filter(email=value).first()
 
-        if not user.check_password(value):
-            raise serializers.ValidationError("Wrong Old Password", code="Invalid Password")
-
-        if len(value) < 8:
-            raise serializers.ValidationError(
-                "Password must be minimum of eight(8) characters", code="Short Password"
-            )
+        if user is None:
+            raise serializers.ValidationError("User doesn't exist", code="Not Found")
 
         return value
 
