@@ -115,6 +115,21 @@ class TestUserProfileView:
         assert response.data["email"] == self.mock_user.email
         assert response.data["roles"] == ["quiz-master"]
 
+    def test_user_profile_update(self):
+        """Test updating the current user's profile"""
+
+        self.api_client.force_authenticate(user=self.mock_user)
+        data = {
+            "first_name": "John",
+            "last_name": "Doe",
+            "email": self.mock_user.email,
+        }
+        response = self.api_client.put(self.url, data)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["first_name"] == "John"
+        assert response.data["last_name"] == "Doe"
+        assert response.data["email"] == self.mock_user.email
+
 
 @pytest.mark.django_db
 class TestUserRetrieveDestroyView:
