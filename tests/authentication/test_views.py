@@ -175,9 +175,8 @@ class ChangePasswordAPIViewTests(APITestCase):
 
         self.client.force_authenticate(self.user)
 
-        request_data = {"old_password": "old_password", "new_password": "new_password"}
-
-        response = self.client.post(self.url, request_data, format="json")
+        request_data = {"email": self.user.email, "new_password": "new_password"}
+        response = self.client.put(self.url, request_data, format="json")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"message": "Password Successfully updated"})
@@ -190,23 +189,23 @@ class ChangePasswordAPIViewTests(APITestCase):
 
         self.client.force_authenticate(self.user)
 
-        request_data = {"old_password": "old_password", "new_password": "new"}
+        request_data = {"email": "someemail@gmail.com", "new_password": "new"}
 
-        response = self.client.post(self.url, request_data, format="json")
+        response = self.client.put(self.url, request_data, format="json")
 
         self.assertEqual(response.status_code, 400)
 
         user = User.objects.filter(email="delight@mail.com").first()
-        self.assertTrue(user.check_password(request_data["old_password"]))
+        self.assertFalse(user.check_password(request_data["new_password"]))
 
     def test_user_new_password_cannot_be_same_as_old_password(self):
         """Test user new password cannot be same as old password"""
 
         self.client.force_authenticate(self.user)
 
-        request_data = {"old_password": "old_password", "new_password": "old_password"}
+        request_data = {"email": self.user.email, "new_password": "old_password"}
 
-        response = self.client.post(self.url, request_data)
+        response = self.client.put(self.url, request_data)
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
