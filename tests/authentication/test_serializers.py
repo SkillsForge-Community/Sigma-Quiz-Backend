@@ -8,6 +8,7 @@ from sigma.authentication.serializers import (
     ChangePasswordSerializer,
     LogInSerializer,
     RegisterUserSerializer,
+    ResetPasswordSerializer,
 )
 from tests.authentication.factories import User, UserModelFactory
 
@@ -122,6 +123,42 @@ class TestSignInSerializer(APITestCase):
         self.assertIn("email", context.exception.detail)
 
 
+class ResetPasswordSerializerTests(APITestCase):
+
+    def setUp(self):
+        self.user = UserModelFactory(email="delight@mail.com")
+        self.user.set_password("old_password")
+        self.user.save()
+
+    def test_error_raised_for_short_length_of_password(self):
+        """Test error raised for short length of password"""
+
+        request = MagicMock()
+        request.user = self.user
+
+        data = {"old_password": "old_password", "new_password": "new"}
+        serializer = ResetPasswordSerializer(data=data, context={"request": request})
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(
+            serializer.errors["new_password"][0],
+            ErrorDetail(
+                string="This password is too short. It must contain at least 8 characters.",
+                code="Invalid Password",
+            ),
+        )
+
+    def test_error_not_raised_when_valid_data_are_provided(self):
+        """Test user password changed when valid data are provided"""
+
+        request = MagicMock()
+        request.user = self.user
+
+        data = {"email": request.user.email, "new_password": "new_password"}
+
+        serializer = ResetPasswordSerializer(data=data, context={"request": request})
+        self.assertTrue(serializer.is_valid())
+
+
 class ChangePasswordSerializerTests(APITestCase):
 
     def setUp(self):
@@ -146,13 +183,13 @@ class ChangePasswordSerializerTests(APITestCase):
             ),
         )
 
-    def test_error_not_raised_when_valid_data_are_provided(self):
+    def test_error_not_raised_when_when_valid_data_are_provided(self):
         """Test user password changed when valid data are provided"""
 
         request = MagicMock()
         request.user = self.user
 
-        data = {"email": request.user.email, "new_password": "new_password"}
+        data = {"old_password": "old_password", "new_password": "new_password"}
 
         serializer = ChangePasswordSerializer(data=data, context={"request": request})
         self.assertTrue(serializer.is_valid())
