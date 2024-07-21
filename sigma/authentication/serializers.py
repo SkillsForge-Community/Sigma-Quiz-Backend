@@ -92,6 +92,37 @@ class LogInSerializer(serializers.Serializer):
         return {"access_token": str(refresh.access_token), "user": ProfileSerializer(instance).data}
 
 
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate_email(self, value):
+        """This is for validating email"""
+
+        user = User.objects.filter(email=value).first()
+
+        if user is None:
+            raise serializers.ValidationError("User doesn't exist", code="Not Found")
+
+        return value
+
+    def validate_new_password(self, value):
+        """This is for validating new password"""
+
+        user = self.context["request"].user
+
+        if user.check_password(value):
+            raise serializers.ValidationError(
+                "New password can't be same as Old password", code="Invalid Password"
+            )
+        try:
+            password_validator(value)
+        except ValidationError as err:
+            raise serializers.ValidationError(err.messages, code="Invalid Password")
+
+        return value
+
+
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(write_only=True)

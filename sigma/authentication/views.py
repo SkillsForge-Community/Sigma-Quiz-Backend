@@ -5,6 +5,7 @@ from sigma.authentication.serializers import (
     ChangePasswordSerializer,
     LogInSerializer,
     RegisterUserSerializer,
+    ResetPasswordSerializer,
 )
 
 
@@ -31,13 +32,29 @@ class LoginInAPIView(generics.GenericAPIView):
             return Response(serializer.data)
 
 
+class ResetPasswordAPIView(generics.GenericAPIView):
+    serializer_class = ResetPasswordSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def put(self, request, *args, **kwargs):
+        user = self.request.user
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user.set_password(serializer.validated_data["new_password"])
+        user.save(update_fields=["password"])
+
+        return Response({"message": "Password Successfully updated"}, status=status.HTTP_200_OK)
+
+
 class ChangePasswordAPIView(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [
         permissions.IsAuthenticated,
     ]
 
-    def post(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         user = self.request.user
 
         serializer = self.get_serializer(data=request.data)
