@@ -34,7 +34,7 @@ class LoginInAPIView(generics.GenericAPIView):
 
 class ResetPasswordAPIView(generics.GenericAPIView):
     serializer_class = ResetPasswordSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.AllowAny,)
 
     def put(self, request, *args, **kwargs):
         user = self.request.user
