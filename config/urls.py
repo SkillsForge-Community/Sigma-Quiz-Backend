@@ -21,4 +21,7 @@ from django.urls import include, path
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("sigma.authentication.api.v1.urls"), name="auth"),
+    path("school", include("school.urls"), name="school"),
+    path("quiz/", include("quiz.urls"), name="quiz"),
+    path("round/", include("round.urls"), name="round"),
 ]
